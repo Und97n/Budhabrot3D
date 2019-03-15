@@ -5,7 +5,7 @@
 
 using namespace std;
 
-#define BUDHA_SIZE 700
+#define BUDHA_SIZE 512
 #define THREADS_COUNT 4
 
 int main(int argc, char *argv[]) {
@@ -27,11 +27,12 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 
-	Budhabrot budhabrot(BUDHA_SIZE, 1 << 15, 4);
+	Budhabrot budhabrot(BUDHA_SIZE, 1 << 10, 4);
 	budhabrot.startWorkers();
 
 	float exposure = 16;
 	float gamma = 1;
+	int z = BUDHA_SIZE/2;
 
 	for(;;) {
 		SDL_Flip(screen);
@@ -56,6 +57,15 @@ int main(int argc, char *argv[]) {
 						case '4':
 							gamma /= 2;
 							break;
+						case 'w':
+							++z;
+							cout << "Z = " << z << "\n";
+							break;
+						case 's':
+							--z;
+							cout << "Z = " << z << "\n";
+							break;
+
 					}
 				break;
 				case SDL_QUIT: goto done;
@@ -67,7 +77,13 @@ int main(int argc, char *argv[]) {
 
 		for(int y = 0; y < BUDHA_SIZE; ++y) {
 			for(int x = 0; x < BUDHA_SIZE; ++x) {
-				pix[x + y * pth] = budhabrot.getPixel(exposure, gamma, x, y);
+				int color = 0;
+
+				for(int zz = 0; zz < 10; ++zz) {
+					color += budhabrot.getPixel(exposure, gamma, x, y, z + zz);
+				}
+
+				pix[x + y * pth] = color;
 			}
 		}
 

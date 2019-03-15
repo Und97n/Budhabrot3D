@@ -45,6 +45,7 @@ static int Iterate(double x0,double y0, double _x0, double _y0, int *n,Coords *s
 
 		seq[i].x = xnew;
 		seq[i].y = ynew;
+		seq[i].z = sqrt(xnew*xnew + ynew*ynew - x*x - y*y);
 
 		*n = i;
 		if(oldX == xnew && oldY == ynew) {
@@ -95,13 +96,13 @@ struct BudhabrotThread {
 	}
 
 	void proceed() {
-		int i,ix,iy;
+		int i,ix,iy, iz;
 		long tt;
 		const int bufferSize = budhabrot->buffer_size;
 		int n;
 
 		int NMAX = budhabrot->maxIterations;
-		int NMIN = NMAX >> 2;
+		int NMIN = NMAX >> 5;
 
 		int j = 0;
 
@@ -109,14 +110,15 @@ struct BudhabrotThread {
 
 			for (tt=0; tt < 65536; tt++) {
 				double x, y, z, w;
+
 				// Choose a random point in same range
 				x = 4 * random_double(threadID) - 2;
 				y = 4 * random_double(threadID) - 2;
 				z = 4 * random_double(threadID) - 2;
-				w = 4 * random_double(threadID) - 2;
+//				w = 4 * random_double(threadID) - 2;
 
 				// Determine state of this point, draw if it escapes
-				if (Iterate(x,y, 1, 0, &n, sequence, budhabrot->maxIterations)) {
+				if (Iterate(x, y, z, 0, &n, sequence, budhabrot->maxIterations)) {
 					if(n < NMIN) {
 						continue;
 					}
@@ -126,9 +128,10 @@ struct BudhabrotThread {
 					for (i = 0; i < itEnd; i++) {
 						ix = 0.3 * bufferSize  * (sequence[i].x + 0.5) + bufferSize/2;
 						iy = 0.3 * bufferSize * sequence[i].y + bufferSize/2;
+						iz = 0.3 * bufferSize * sequence[i].z + bufferSize/2;
 
-						if (ix >= 0 && iy >= 0 && ix < bufferSize && iy < bufferSize) {
-							budhabrot->data[ix*bufferSize + iy]++;
+						if (ix >= 0 && iy >= 0 && ix < bufferSize && iy < bufferSize && iz >= 0 && iz < bufferSize) {
+							budhabrot->data[(ix + iz*bufferSize)*bufferSize + iy]++;
 						}
 					}
 				}
@@ -146,7 +149,7 @@ static void* budhabrotThreadStarter(void* bt) {
 Budhabrot::Budhabrot(const int buffer_size, const int maxIterations, const int threadsCount)
 	: buffer_size(buffer_size), maxIterations(maxIterations), threadsCount(threadsCount) {
 
-	data = new int[buffer_size*buffer_size];
+	data = new int[buffer_size*buffer_size*buffer_size];
 	threads = new BudhabrotThread[threadsCount];
 
 	for(int i = 0; i < threadsCount; ++i) {
@@ -170,8 +173,8 @@ void Budhabrot::stopWorkers() {
 	}
 }
 
-int Budhabrot::getPixel(float exposure, float gamma, int x, int y) const {
-	int value = data[x + y*buffer_size];
+int Budhabrot::getPixel(float exposure, float gamma, int x, int y, int z) const {
+	int value = data[x + (y + z*buffer_size)*buffer_size];
 	maxValue = std::max(value, maxValue);
 
 	float pvalue = powf((float)value/maxValue, 1.0f/gamma);

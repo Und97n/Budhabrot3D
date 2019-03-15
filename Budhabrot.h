@@ -23,5 +23,5 @@ public:
 
 	void startWorkers();
 	void stopWorkers();
-	int getPixel(float exposure, float gamma, int x, int y) const;
+	int getPixel(float exposure, float gamma, int x, int y, int z) const;
 };
