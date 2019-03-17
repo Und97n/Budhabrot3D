@@ -19,3 +19,7 @@ double random_double(int thread_num);
 
 int HSBtoRGB(float hue, float saturation, float brightness);
 
+typedef struct {
+	float x,y, z;
+} Coords;
+

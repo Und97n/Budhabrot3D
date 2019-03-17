@@ -14,14 +14,20 @@ class Budhabrot {
 
 	BudhabrotThread* threads;
 
-	mutable int maxValue;
-
 	friend BudhabrotThread;
+	bool running;
 public:
 	Budhabrot(const int buffer_size, const int maxIterations, const int threadsCount);
 	~Budhabrot();
 
 	void startWorkers();
 	void stopWorkers();
-	int getPixel(float exposure, float gamma, int x, int y, int z) const;
+
+	inline int* getData() {
+		return data;
+	}
+
+	inline int getBufferSize() const {
+		return buffer_size;
+	}
 };

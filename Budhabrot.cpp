@@ -9,10 +9,6 @@
 #include <pthread.h>
 #include <signal.h>
 
-typedef struct {
-	float x,y, z;
-} Coords;
-
 /*
    Iterate the Mandelbrot and return TRUE if the point escapes
 */
@@ -106,9 +102,9 @@ struct BudhabrotThread {
 
 		int j = 0;
 
-		while(1) {
+		while(budhabrot->running) {
 
-			for (tt=0; tt < 65536; tt++) {
+			for (tt=0; tt < 128; tt++) {
 				double x, y, z, w;
 
 				// Choose a random point in same range
@@ -128,7 +124,7 @@ struct BudhabrotThread {
 					for (i = 0; i < itEnd; i++) {
 						ix = 0.3 * bufferSize  * (sequence[i].x + 0.5) + bufferSize/2;
 						iy = 0.3 * bufferSize * sequence[i].y + bufferSize/2;
-						iz = 0.3 * bufferSize * sequence[i].z + bufferSize/2;
+						iz = 0.3 * bufferSize * sequence[i].z;
 
 						if (ix >= 0 && iy >= 0 && ix < bufferSize && iy < bufferSize && iz >= 0 && iz < bufferSize) {
 							budhabrot->data[(ix + iz*bufferSize)*bufferSize + iy]++;
@@ -142,6 +138,8 @@ struct BudhabrotThread {
 
 static void* budhabrotThreadStarter(void* bt) {
 	((BudhabrotThread*)bt)->proceed();
+
+	return NULL;
 }
 
 
@@ -168,18 +166,5 @@ void Budhabrot::startWorkers() {
 }
 
 void Budhabrot::stopWorkers() {
-	for(int i = 0; i < threadsCount; ++i) {
-		threads[i].stop();
-	}
-}
-
-int Budhabrot::getPixel(float exposure, float gamma, int x, int y, int z) const {
-	int value = data[x + (y + z*buffer_size)*buffer_size];
-	maxValue = std::max(value, maxValue);
-
-	float pvalue = powf((float)value/maxValue, 1.0f/gamma);
-	pvalue *= exposure;
-
-	pvalue = pvalue > 1 ? 1 : pvalue;
-	return HSBtoRGB(0.6, 0.6, pvalue);
+	running = false;
 }
