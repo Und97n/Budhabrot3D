@@ -9,7 +9,7 @@
 class BudhabrotThread;
 
 class Budhabrot {
-	int* data;
+	int** data;
 	const int buffer_size, maxIterations, threadsCount;
 
 	BudhabrotThread* threads;
@@ -23,7 +23,7 @@ public:
 	void startWorkers();
 	void stopWorkers();
 
-	inline int* getData() {
+	inline int** getData() {
 		return data;
 	}
 

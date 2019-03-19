@@ -41,7 +41,8 @@ static int Iterate(double x0,double y0, double _x0, double _y0, int *n,Coords *s
 
 		seq[i].x = xnew;
 		seq[i].y = ynew;
-		seq[i].z = sqrt(xnew*xnew + ynew*ynew - x*x - y*y);
+		seq[i].z = (xnew*xnew + ynew*ynew - x*x - y*y);
+		seq[i].z = (seq[i].z);
 
 		*n = i;
 		if(oldX == xnew && oldY == ynew) {
@@ -49,7 +50,7 @@ static int Iterate(double x0,double y0, double _x0, double _y0, int *n,Coords *s
 			return 0;
 		}
 
-		if (xnew*xnew + ynew*ynew > 10) {
+		if (xnew*xnew + ynew*ynew > 4) {
 			return 1;
 		}
 
@@ -114,7 +115,7 @@ struct BudhabrotThread {
 //				w = 4 * random_double(threadID) - 2;
 
 				// Determine state of this point, draw if it escapes
-				if (Iterate(x, y, z, 0, &n, sequence, budhabrot->maxIterations)) {
+				if (Iterate(x, y, 0, 0, &n, sequence, budhabrot->maxIterations)) {
 					if(n < NMIN) {
 						continue;
 					}
@@ -124,10 +125,10 @@ struct BudhabrotThread {
 					for (i = 0; i < itEnd; i++) {
 						ix = 0.3 * bufferSize  * (sequence[i].x + 0.5) + bufferSize/2;
 						iy = 0.3 * bufferSize * sequence[i].y + bufferSize/2;
-						iz = 0.3 * bufferSize * sequence[i].z;
+						iz = 0.2 * bufferSize * sequence[i].z + bufferSize/2;
 
 						if (ix >= 0 && iy >= 0 && ix < bufferSize && iy < bufferSize && iz >= 0 && iz < bufferSize) {
-							budhabrot->data[(ix + iz*bufferSize)*bufferSize + iy]++;
+							budhabrot->data[iz][ix*bufferSize + iy]++;
 						}
 					}
 				}
@@ -142,12 +143,16 @@ static void* budhabrotThreadStarter(void* bt) {
 	return NULL;
 }
 
-
-
 Budhabrot::Budhabrot(const int buffer_size, const int maxIterations, const int threadsCount)
 	: buffer_size(buffer_size), maxIterations(maxIterations), threadsCount(threadsCount) {
 
-	data = new int[buffer_size*buffer_size*buffer_size];
+	// Because we can`t allocate one big contiguous array
+	data = new int*[buffer_size];
+
+	for(int i = 0; i < buffer_size; ++i) {
+		data[i] = new int[buffer_size*buffer_size];
+	}
+
 	threads = new BudhabrotThread[threadsCount];
 
 	for(int i = 0; i < threadsCount; ++i) {
@@ -160,6 +165,7 @@ Budhabrot::~Budhabrot() {
 }
 
 void Budhabrot::startWorkers() {
+	running = true;
 	for(int i = 0; i < threadsCount; ++i) {
 		threads[i].start();
 	}
